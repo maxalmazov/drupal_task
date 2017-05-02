@@ -1,0 +1,44 @@
+<?php
+
+function typos_schema() {
+    $schema['typos_report'] = [
+        'fields' => [
+            'typo_id' => [
+                'type' => 'serial',
+                'not null' => TRUE,
+            ],
+            'url' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'created' => [
+                'type' => 'int',
+                'default' => '0',
+                'not null' => TRUE,
+            ],
+            'uid' => [
+                'type' => 'int',
+                'default' => '0',
+                'not null' => TRUE,
+            ],
+            'user_ip' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'text' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'comment' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ]
+        ],
+        'description' => 'List of reports about typos',
+        'primary key' => ['typo_id']
+    ];
+}
