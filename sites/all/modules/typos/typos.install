@@ -41,4 +41,15 @@ function typos_schema() {
         'description' => 'List of reports about typos',
         'primary key' => ['typo_id']
     ];
+    return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function typos_uninstall() {
+  variable_del('typos_reports_ttl');
+  variable_del('typos_reports_email');
+  variable_del('typos_max_chars');
+  variable_del('typos_max_reports');
 }

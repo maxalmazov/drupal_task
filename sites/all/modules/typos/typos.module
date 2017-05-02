@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function typos_menu()
+{
+    $items = [];
+    $items ['admin/config/user-interface/typos'] = [
+        'title' => 'Typos report setting',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => ['typos_admin_settings'],
+        'access arguments' => ['administer site configuration'],
+        'file' => 'typos.admin.inc',
+    ];
+
+    return $items;
+}

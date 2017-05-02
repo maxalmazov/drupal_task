@@ -14,6 +14,7 @@ sites/all/libraries/
 sites/all/modules/ctools/
 sites/all/modules/devel/
 sites/all/modules/typo/
+sites/all/modules/views/
 sites/all/themes/
 sites/default/
 /.idea/
