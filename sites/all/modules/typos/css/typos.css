@@ -1,0 +1,34 @@
+#typos-report-wrapper {
+  display: none;
+}
+
+#typos-modal div.ctools-modal-content .modal-header {
+  background-color: #999;
+}
+
+#typos-modal {
+  background: url(../images/bg.png);
+  padding: 10px;
+}
+
+#typos-modal .ctools-modal-content {
+  background-color: #fff;
+  border: 0;
+  padding-bottom: 20px;
+}
+
+#typos-modal #typo-context-div {
+  margin: 5px 0;
+  background-color: #eee;
+  padding: 5px;
+}
+
+#typos-modal #typo-comment {
+  width: 100%;
+  border: 1px solid #777;
+  margin: 5px 0;
+}
+
+#typos-report-result {
+  display: none;
+}

@@ -41,6 +41,40 @@ function typos_schema() {
         'description' => 'List of reports about typos',
         'primary key' => ['typo_id']
     ];
+
+    $schema['typos_field_settings'] = [
+        'fields' => [
+            'id' => [
+                'type' => 'serial',
+                'not null' => TRUE,
+            ],
+            'field_name' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'is_enabled_typo' => [
+                'type' => 'int',
+                'default' => '0',
+                'not null' => TRUE,
+            ],
+            'email' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'max_chars' => [
+                'type' => 'int',
+            ],
+            'popup_text' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ]
+        ],
+        'description' => 'List of settings for fields',
+        'primary key' => ['id']
+    ];
     return $schema;
 }
 
@@ -52,4 +86,8 @@ function typos_uninstall() {
   variable_del('typos_reports_email');
   variable_del('typos_max_chars');
   variable_del('typos_max_reports');
+
+  cache_clear_all('typos', 'cache', TRUE);
+  drupal_uninstall_schema('typos_report');
+  drupal_uninstall_schema('typos_field_settings');
 }
