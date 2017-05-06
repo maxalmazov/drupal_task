@@ -18,114 +18,36 @@ function typos_menu()
 }
 
 /**
- * Implements hook_page_build().
- */
-/*function typo_page_build(&$page) {
-    ctools_include('ajax');
-    ctools_include('modal');
-
-    drupal_add_js(['typo' => ['max_chars' => variable_get('typos_max_chars', 10)]], 'setting');
-
-    drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.js');
-    drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.template.js');
-    drupal_add_css(drupal_get_path('module', 'typos') . '/css/typos.css');
-
-    ctools_modal_add_js();
-
-    $setting = [
-      'TyposModal' => [
-          'loadingText' => t('Send typo report'),
-          'closeText' => t('close'),
-          'closeImage' => '',
-          'modalTheme' => 'TypoModalDialog',
-          'animation' => 'show',
-          'animationSpeed' => 'fast',
-          'modalSize' => [
-              'type' => 'scale',
-              'width' => '560px',
-              'height' => '250px',
-              'addWidth' => 0,
-              'addHeight' => 0,
-              'contentRight' => 25,
-              'contentBottom' => 45,
-          ],
-          'modalOptions' => [
-              'opacity' => 0.55,
-              'background' => '#000',
-          ]
-      ]
-    ];
-
-    drupal_add_js($setting, 'setting');
-
-    $page['page_bottom']['typos']= [
-        '#type' => 'markup',
-        '#markup' => '<div id="typos-report-wrapper">' . theme('typos_report') . '</div>',
-    ];
-}*/
-
-/**
- * Implements hook_form_alter().
+ * Implements hook_form_field_ui_field_edit_form_alter().
  */
 function typos_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id)
 {
-    $form['field']['is_enabled'] = [
-        '#type' => 'checkbox',
-        '#title' => t('Allow the users to send a report of typos.'),
-        '#default_value' => variable_get('is_enabled')
-    ];
+    if ($form['#field']['type'] == 'text' || $form['#field']['type'] == 'text_long' || $form['#field']['type'] == 'text_with_summary') {
+        $form['field']['is_enabled'] = [
+            '#type' => 'checkbox',
+            '#title' => t('Allow the users to send a report of typos.'),
+            '#default_value' => !empty($form['#field']['is_enabled']) ? $form['#field']['is_enabled'] : null,
+        ];
 
-    $form['field']['email'] = [
-        '#type' => 'textfield',
-        '#title' => t('Email where typos report are sent.'),
-        '#default_value' => variable_get('email')
-    ];
+        $form['field']['email'] = [
+            '#type' => 'textfield',
+            '#title' => t('Email where typos report are sent.'),
+            '#default_value' => !empty($form['#field']['email']) ? $form['#field']['email'] : null,
+            '#description' => 'Used if allows the users to send a report of typos.',
+        ];
 
-    $form['field']['max_chars'] = [
-        '#type' => 'textfield',
-        '#title' => t('Max chars selection fo report.'),
-    ];
+        $form['field']['max_chars'] = [
+            '#type' => 'textfield',
+            '#title' => t('Max chars selection fo report.'),
+            '#default_value' => !empty($form['#field']['max_chars']) ? $form['#field']['max_chars'] : null,
+            '#description' => 'Used if allows the users to send a report of typos.',
+        ];
 
-    $form['field']['popup_text'] = [
-        '#type' => 'textfield',
-        '#title' => t('Text for modal window.'),
-    ];
-
-    $form['#validate'][] = 'typos_form_field_ui_field_edit_form_alter_validate';
-    $form['#submit'][] = 'typos_form_field_ui_field_edit_form_alter_submit';
-
-}
-
-function typos_form_field_ui_field_edit_form_alter_validate(&$form, &$form_state)
-{
-    if (!valid_email_address($form_state['values']['field']['email'])) {
-        form_set_error('email', t($form_state['values']['field']['email'].' is not valid email'));
+        $form['field']['popup_text'] = [
+            '#type' => 'textfield',
+            '#title' => t('Text for modal window.'),
+            '#default_value' => !empty($form['#field']['popup_text']) ? $form['#field']['popup_text'] : null,
+            '#description' => 'Used if allows the users to send a report of typos.',
+        ];
     }
-
-    if(!is_numeric($form_state['values']['field']['max_chars']) || $form_state['values']['field']['max_chars'] < 0) {
-        form_set_error('max_chars', t('Maximum characters in selection should be an integer.'));
-    } else {
-        $form_state['values']['field']['max_chars'] = (int) $form_state['values']['field']['max_chars'];
-    }
-}
-
-function typos_form_field_ui_field_edit_form_alter_submit(&$form, &$form_state)
-{
-    $values = [
-        'is_enabled' => $form_state['values']['field']['is_enabled'],
-        'field_name' => $form['#field']['field_name'],
-        'email' => $form_state['values']['field']['email'],
-        'max_chars' => $form_state['values']['field']['max_chars'],
-        'popup_text' => $form_state['values']['field']['popup_text'],
-    ];
-
-    db_insert('typos_field_settings')
-        -> fields([
-            'field_name' => $values['field_name'],
-            'is_enabled_typo' => $values['is_enabled'],
-            'email' => $values['email'],
-            'max_chars' => $values['max_chars'],
-            'popup_text' => $values['popup_text'],
-        ])
-        ->execute();
 }
