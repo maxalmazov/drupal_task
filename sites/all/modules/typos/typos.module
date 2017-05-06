@@ -26,28 +26,42 @@ function typos_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_i
         $form['field']['is_enabled'] = [
             '#type' => 'checkbox',
             '#title' => t('Allow the users to send a report of typos.'),
-            '#default_value' => !empty($form['#field']['is_enabled']) ? $form['#field']['is_enabled'] : null,
+            '#default_value' => !empty($form['#field']['is_enabled']) ? $form['#field']['is_enabled'] : 0,
         ];
 
         $form['field']['email'] = [
             '#type' => 'textfield',
             '#title' => t('Email where typos report are sent.'),
-            '#default_value' => !empty($form['#field']['email']) ? $form['#field']['email'] : null,
+            '#default_value' => !empty($form['#field']['email']) ? $form['#field']['email'] : variable_get('site_mail'),
             '#description' => 'Used if allows the users to send a report of typos.',
         ];
 
         $form['field']['max_chars'] = [
             '#type' => 'textfield',
             '#title' => t('Max chars selection fo report.'),
-            '#default_value' => !empty($form['#field']['max_chars']) ? $form['#field']['max_chars'] : null,
+            '#default_value' => !empty($form['#field']['max_chars']) ? $form['#field']['max_chars'] : variable_get('typos_max_chars', 10),
             '#description' => 'Used if allows the users to send a report of typos.',
         ];
 
         $form['field']['popup_text'] = [
             '#type' => 'textfield',
             '#title' => t('Text for modal window.'),
-            '#default_value' => !empty($form['#field']['popup_text']) ? $form['#field']['popup_text'] : null,
+            '#default_value' => !empty($form['#field']['popup_text']) ? $form['#field']['popup_text'] : 'Send typo report',
             '#description' => 'Used if allows the users to send a report of typos.',
         ];
+        $form['#validate'][] = 'typos_form_field_ui_field_edit_form_alter_validate';
+    }
+}
+
+function typos_form_field_ui_field_edit_form_alter_validate(&$form, &$form_state)
+{
+    if (!valid_email_address($form_state['values']['field']['email'])) {
+            form_set_error('email', t($form_state['values']['field']['email'].' is not valid email'));
+        }
+
+    if(!is_numeric($form_state['values']['field']['max_chars']) || $form_state['values']['field']['max_chars'] < 0) {
+        form_set_error('max_chars', t('Maximum characters in selection should be an integer.'));
+    } else {
+        $form_state['values']['field']['max_chars'] = (int) $form_state['values']['field']['max_chars'];
     }
 }
