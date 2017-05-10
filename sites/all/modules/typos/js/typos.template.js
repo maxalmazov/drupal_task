@@ -4,10 +4,10 @@
    * Clone of function Drupal.theme.prototype.CToolsModalDialog.
    */
   Drupal.theme.prototype.TyposModalDialog = function () {
-    var html = ''
-    html += '  <div id="ctools-modal">'
-    html += '    <div id="typos-modal">'
-    html += '      <div class="ctools-modal-content">' // panels-modal-content
+    var html = '';
+    html += '  <div id="ctools-modal">';
+    html += '    <div id="typos-modal">';
+    html += '      <div class="ctools-modal-content">'; // panels-modal-content
     html += '        <div class="modal-header">';
     html += '          <a id="close" href="#">';
     html +=              Drupal.CTools.Modal.currentSettings.closeText + Drupal.CTools.Modal.currentSettings.closeImage;

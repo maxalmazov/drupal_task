@@ -65,3 +65,121 @@ function typos_form_field_ui_field_edit_form_alter_validate(&$form, &$form_state
         $form_state['values']['field']['max_chars'] = (int) $form_state['values']['field']['max_chars'];
     }
 }
+
+/**
+ * Implements hook_theme().
+ */
+function typos_theme() {
+    return [
+        'typos_report' => [
+            'template' => 'typos-report-form',
+        ],
+    ];
+}
+
+/**
+ * Process variables for typos-report-form.tpl.php.
+ *
+ * @see typos-report-form.tpl.php
+ */
+function template_preprocess_typos_report(&$variables) {
+    $form = drupal_get_form('typos_report_form');
+    $variables['typos_report_form'] = drupal_render($form);
+}
+
+/**
+ * Implements hook_page_build().
+ */
+function typos_page_build(&$page) {
+
+    ctools_include('ajax');
+    ctools_include('modal');
+
+    drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.template.js');
+    drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.js');
+    drupal_add_css(drupal_get_path('module', 'typos') . '/css/typos.css');
+
+    ctools_modal_add_js();
+
+    $settings = [
+        'TyposModal' => [
+            'loadingText' => t('Send typo report'),
+            'closeText' => t('close'),
+            'closeImage' => '',
+            'throbber' => theme('image', [
+                'path' => ctools_image_path('throbber.gif'),
+                'title' => t('Loading...'),
+                'alt' => t('Loading'),
+            ]),
+            'modalTheme' => 'TyposModalDialog',
+            'animation' => 'show',
+            'animationSpeed' => 'fast',
+            'modalSize' => [
+                'type' => 'scale',
+                'width' => '560px',
+                'height' => '250px',
+                'addWidth' => 0,
+                'addHeight' => 0,
+                'contentRight' => 25,
+                'contentBottom' => 45,
+            ],
+            'modalOptions' => [
+                'opacity' => 0.55,
+                'background' => '#000',
+            ],
+        ],
+    ];
+
+    drupal_add_js($settings, 'setting');
+
+    $page['page_bottom']['typos']= [
+        '#type' => 'markup',
+        '#markup' => '<div id="typos-report-wrapper">' . theme('typos_report') . '</div>',
+    ];
+}
+
+/**
+ * Typo report form
+ */
+function typos_report_form($form, &$form_state) {
+    $form['typos_comment'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Typos comment'),
+        '#default_value' => '',
+        '#size' => 60,
+        '#maxlength' => 128,
+        '#required' => FALSE,
+        '#weight' => 1,
+    );
+
+
+
+    $form['typos_context'] = array(
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 128,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => array('id' => 'typos-context'),
+    );
+
+    $form['typos_url'] = array(
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => array('id' => 'typos-url'),
+    );
+
+    global $user;
+    $form['typos_uid'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $user->uid,
+        '#maxlength' => 256,
+    );
+
+
+
+    return $form;
+}
