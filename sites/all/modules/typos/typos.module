@@ -23,54 +23,53 @@ function typos_menu()
 function typos_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id)
 {
     if ($form['#field']['type'] == 'text' || $form['#field']['type'] == 'text_long' || $form['#field']['type'] == 'text_with_summary') {
-        $form['typos'] = [
+
+        $form['instance']['typos'] = [
             '#type' => 'fieldset',
-            '#title' => t('Typos settings'),
+            '#title' => t('<em class="placeholder">Typos</em> field settings'),
             '#tree' => TRUE,
         ];
 
-        $form['typos']['settings']['is_enabled'] = [
+        $form['instance']['typos']['is_enabled'] = [
             '#type' => 'checkbox',
             '#title' => t('Allow the users to send a report of typos.'),
-            '#default_value' => !empty($form['typos']['settings']['is_enabled']) ? $form['#field']['is_enabled'] : 0,
+            '#default_value' => !empty($form['#instance']['typos']['is_enabled']) ? $form['#instance']['typos']['is_enabled'] : 0,
         ];
 
-        $form['typos']['settings']['email'] = [
+        $form['instance']['typos']['email'] = [
             '#type' => 'textfield',
             '#title' => t('Email where typos report are sent.'),
             '#description' => 'Used if allows the users to send a report of typos.',
-            '#default_value' => !empty($form['typos']['settings']['email']) ? $form['#field']['email'] : variable_get('site_mail'),
+            '#default_value' => !empty($form['#instance']['typos']['email']) ? $form['#instance']['typos']['email'] : variable_get('site_mail'),
         ];
 
-        $form['typos']['settings']['max_chars'] = [
+        $form['instance']['typos']['max_chars'] = [
             '#type' => 'textfield',
             '#title' => t('Max chars selection fo report.'),
             '#description' => 'Used if allows the users to send a report of typos.',
-            '#default_value' => !empty($form['typos']['settings']['max_chars']) ? $form['#field']['max_chars'] : variable_get('typos_max_chars', 10),
+            '#default_value' => !empty($form['#instance']['typos']['max_chars']) ? $form['#instance']['typos']['max_chars'] : variable_get('typos_max_chars', 10),
         ];
 
-        $form['typos']['settings']['popup_text'] = [
+        $form['instance']['typos']['popup_text'] = [
             '#type' => 'textfield',
             '#title' => t('Text for modal window.'),
             '#description' => 'Used if allows the users to send a report of typos.',
-            '#default_value' => !empty($form['typos']['settings']['popup_text']) ? $form['#field']['popup_text'] : 'Send typo report',
+            '#default_value' => !empty($form['#instance']['typos']['popup_text']) ? $form['#instance']['typos']['popup_text'] : 'Send typo report',
         ];
         $form['#validate'][] = 'typos_form_field_ui_field_edit_form_alter_validate';
     }
-
-    dpm($form);
 }
 
 function typos_form_field_ui_field_edit_form_alter_validate(&$form, &$form_state)
 {
-    if (!valid_email_address($form_state['values']['field']['email'])) {
-            form_set_error('email', t($form_state['values']['field']['email'].' is not valid email'));
+    if (!valid_email_address($form_state['values']['instance']['typos']['email'])) {
+            form_set_error('email', t($form_state['values']['instance']['typos']['email'].' is not valid email'));
         }
 
-    if(!is_numeric($form_state['values']['field']['max_chars']) || $form_state['values']['field']['max_chars'] < 0) {
+    if(!is_numeric($form_state['values']['instance']['typos']['max_chars']) || $form_state['values']['instance']['typos']['max_chars'] < 0) {
         form_set_error('max_chars', t('Maximum characters in selection should be an integer.'));
     } else {
-        $form_state['values']['field']['max_chars'] = (int) $form_state['values']['field']['max_chars'];
+        $form_state['values']['instance']['typos']['max_chars'] = (int) $form_state['values']['instance']['typos']['max_chars'];
     }
 }
 
@@ -102,7 +101,8 @@ function typos_preprocess_field(&$variables)
 {
     if ($variables['element']['#field_type'] == 'text_with_summary' || $variables['element']['#field_type'] == 'text_long' || $variables['element']['#field_type'] == 'text') {
         $variables['classes_array'][] = 'orpho-field';
-        var_dump($variables);
+        var_dump(field_info_instance($variables['element']['#entity_type'], $variables['element']['#field_name'], $variables['element']['#bundle']));
+        //var_dump(field_info_field($variables['element']['#field_name']));
     }
 }
 
