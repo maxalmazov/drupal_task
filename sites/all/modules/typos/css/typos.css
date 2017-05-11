@@ -17,13 +17,13 @@
   padding-bottom: 20px;
 }
 
-#typos-modal #typo-context-div {
+#typos-modal #typos-context-div {
   margin: 5px 0;
   background-color: #eee;
   padding: 5px;
 }
 
-#typos-modal #typo-comment {
+#typos-modal #typos-comment {
   width: 100%;
   border: 1px solid #777;
   margin: 5px 0;

@@ -1,4 +1,5 @@
 (function ($) {
+    $('.orpho-field').each(function(index) {console.log( index + ": " + $( this ).text() ); });
     $(document).keydown(function(event) {
         if (event.shiftKey && event.keyCode == 13) {
             $.fn.typos_report_window();
@@ -108,7 +109,7 @@
         context = context.substring(context_start, context_end);
 
         context_start = context.indexOf(' ') + 1;
-        alert(context_start);
+
         if (selection_start + 60 < context.length) {
             context_end = context.lastIndexOf(' ', selection_start + 60);
         }
