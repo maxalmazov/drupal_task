@@ -97,12 +97,18 @@ function template_preprocess_typos_report(&$variables) {
 /**
  * Implements hook_preprocess_HOOK().
  */
-function typos_preprocess_field(&$variables)
+function typos_preprocess_field(&$variables, $hook)
 {
-    if ($variables['element']['#field_type'] == 'text_with_summary' || $variables['element']['#field_type'] == 'text_long' || $variables['element']['#field_type'] == 'text') {
-        $variables['classes_array'][] = 'orpho-field';
-        var_dump(field_info_instance($variables['element']['#entity_type'], $variables['element']['#field_name'], $variables['element']['#bundle']));
-        //var_dump(field_info_field($variables['element']['#field_name']));
+    $field_type = $variables['element']['#field_type'];
+    if ($field_type == 'text_with_summary' || $field_type == 'text_long' || $field_type == 'text') {
+        $info_instance = field_info_instance($variables['element']['#entity_type'], $variables['element']['#field_name'], $variables['element']['#bundle']);
+        if (array_key_exists('typos', $info_instance) && $info_instance['typos']['is_enabled']) {
+            $variables['classes_array'][] = 'orpho-field';
+            $variables['item_attributes_array']['0']['typos_max_chars'][] = $info_instance['typos']['max_chars'];
+            $variables['item_attributes_array']['0']['typos_popup_text'][] = $info_instance['typos']['popup_text'];
+        }
+
+        var_dump($info_instance);
     }
 }
 
@@ -110,16 +116,17 @@ function typos_preprocess_field(&$variables)
  * Implements hook_page_build().
  */
 function typos_page_build(&$page) {
-    $field = field_info_field('body');
-    if ($field['is_enabled']) {
+
         ctools_include('ajax');
         ctools_include('modal');
-
+        drupal_add_js(array('typos' => array('max_chars' => variable_get('typos_max_chars', 70))), 'setting');
         drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.template.js');
         drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.js');
         drupal_add_css(drupal_get_path('module', 'typos') . '/css/typos.css');
 
         ctools_modal_add_js();
+
+
 
         $settings = [
             'TyposModal' => [
@@ -156,8 +163,6 @@ function typos_page_build(&$page) {
             '#type' => 'markup',
             '#markup' => '<div id="typos-report-wrapper">' . theme('typos_report') . '</div>',
         ];
-    }
-
 }
 
 /**

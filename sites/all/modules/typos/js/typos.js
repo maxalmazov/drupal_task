@@ -1,5 +1,4 @@
 (function ($) {
-    $('.orpho-field').each(function(index) {console.log( index + ": " + $( this ).text() ); });
     $(document).keydown(function(event) {
         if (event.shiftKey && event.keyCode == 13) {
             $.fn.typos_report_window();
@@ -9,39 +8,46 @@
     $.fn.typos_report_window = function() {
         var sel = typos_get_sel_text();
         var context = typos_get_sel_context(sel);
-        Drupal.CTools.Modal.show(Drupal.settings.TyposModal);
-        $('#typos-modal-content').html('&nbsp;');
-        $('#typos-report-content').appendTo('#typos-modal-content');
+        if ($(sel.element).closest('.orpho-field').length){
+            var popup_text = $(sel.element).closest('div').attr('typos_popup_text');
+            Drupal.CTools.Modal.show(Drupal.settings.TyposModal);
+            $('#typos-modal-content').html('&nbsp;');
+            $('#typos-report-content').appendTo('#typos-modal-content');
 
-        $('#typos-context-div').html(context);
-        $('#typos-context').val(context);
-        $('#typos-url').val(window.location);
+            $('#typos-context-div').html(context);
+            $('#typos_popup_text').html(popup_text);
+            $('#typos-context').val(context);
+            $('#typos-url').val(window.location);
 
-        typos_get_sel_text();
-        typos_get_sel_context(sel);
 
-        // Close modal by Esc press.
-        $(document).keydown(typos_close = function(e) {
-            if (e.keyCode == 27) {
+            // Close modal by Esc press.
+            $(document).keydown(typos_close = function(e) {
+                if (e.keyCode == 27) {
+                    typos_restore_form();
+                    modalContentClose();
+                    $(document).unbind('keydown', typos_close);
+                }
+            });
+
+            // Close modal by clicking outside the window.
+            $('#modalBackdrop').click(typos_click_close = function(e) {
+                typos_restore_form();
+                modalContentClose();
+                $('#modalBackdrop').unbind('click', typos_click_close);
+            });
+
+            // Close modal by "close" link click.
+            $('#close').click(function(e) {
                 typos_restore_form();
                 modalContentClose();
                 $(document).unbind('keydown', typos_close);
-            }
-        });
+            });
+        }
 
-        // Close modal by clicking outside the window.
-        $('#modalBackdrop').click(typos_click_close = function(e) {
-            typos_restore_form();
-            modalContentClose();
-            $('#modalBackdrop').unbind('click', typos_click_close);
-        });
+        console.log($(sel.element).closest('div'));
+        console.log($(sel.element).closest('div').is('[typos_max_chars]'));
+        console.log($(sel.element).closest('div').attr('typos_max_chars'));
 
-        // Close modal by "close" link click.
-        $('#close').click(function(e) {
-            typos_restore_form();
-            modalContentClose();
-            $(document).unbind('keydown', typos_close);
-        });
     };
 
     /**
@@ -60,6 +66,7 @@
         if (window.getSelection) {
             txt = window.getSelection();
             selected_text = txt.toString();
+            element = txt.anchorNode;
             full_text = txt.anchorNode.textContent;
             selection_start = txt.anchorOffset;
             selection_end = txt.focusOffset;
@@ -71,7 +78,8 @@
             selected_text: selected_text,
             full_text: full_text,
             selection_start: selection_start,
-            selection_end: selection_end
+            selection_end: selection_end,
+            element: element
         };
 
         return txt;

@@ -5,9 +5,7 @@
             print t('You are reporting a typo in the following text:');
             ?>
             <div id="typos-context-div"></div>
-            <?php
-            print t('Simply click the "Send typo report" button to complete the report. You can also include a comment.');
-            ?>
+            <div id="typos_popup_text"></div>
         </div>
         <div id="typos-form">
             <?php
