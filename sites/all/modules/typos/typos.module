@@ -106,9 +106,11 @@ function typos_preprocess_field(&$variables, $hook)
             $variables['classes_array'][] = 'orpho-field';
             $variables['item_attributes_array']['0']['typos_max_chars'][] = $info_instance['typos']['max_chars'];
             $variables['item_attributes_array']['0']['typos_popup_text'][] = $info_instance['typos']['popup_text'];
+            $variables['item_attributes_array']['0']['entity_type'][] = $info_instance['entity_type'];
+            $variables['item_attributes_array']['0']['nid'][] = $variables['element']['#object']->nid;
+            $variables['item_attributes_array']['0']['label'][] = $info_instance['label'];
+            $variables['item_attributes_array']['0']['field_name'][] = $info_instance['field_name'];
         }
-
-        var_dump($info_instance);
     }
 }
 
@@ -119,15 +121,11 @@ function typos_page_build(&$page) {
 
         ctools_include('ajax');
         ctools_include('modal');
-        drupal_add_js(array('typos' => array('max_chars' => variable_get('typos_max_chars', 70))), 'setting');
         drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.template.js');
         drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.js');
         drupal_add_css(drupal_get_path('module', 'typos') . '/css/typos.css');
 
         ctools_modal_add_js();
-
-
-
         $settings = [
             'TyposModal' => [
                 'loadingText' => t('Send typo report'),
@@ -169,7 +167,7 @@ function typos_page_build(&$page) {
  * Typo report form
  */
 function typos_report_form($form, &$form_state) {
-    $form['typos_comment'] = array(
+    $form['typos_comment'] = [
         '#type' => 'textfield',
         '#title' => t('Typos comment'),
         '#default_value' => '',
@@ -177,27 +175,61 @@ function typos_report_form($form, &$form_state) {
         '#maxlength' => 128,
         '#required' => FALSE,
         '#weight' => 1,
-    );
+    ];
 
-
-
-    $form['typos_context'] = array(
+    $form['typos_context'] = [
         '#type' => 'hidden',
         '#default_value' => '',
         '#maxlength' => 128,
         '#required' => FALSE,
         '#weight' => 1,
-        '#attributes' => array('id' => 'typos-context'),
-    );
+        '#attributes' => ['id' => 'typos_context'],
+    ];
 
-    $form['typos_url'] = array(
+    $form['typos_url'] = [
         '#type' => 'hidden',
         '#default_value' => '',
         '#maxlength' => 256,
         '#required' => FALSE,
         '#weight' => 1,
-        '#attributes' => array('id' => 'typos-url'),
-    );
+        '#attributes' => ['id' => 'typos_url'],
+    ];
+
+    $form['typos_entity_type'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_entity_type'],
+    ];
+
+    $form['typos_nid'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_nid'],
+    ];
+
+    $form['typos_label'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_label'],
+    ];
+
+    $form['typos_field_name'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_field_name'],
+    ];
 
     global $user;
     $form['typos_uid'] = array(
@@ -206,7 +238,19 @@ function typos_report_form($form, &$form_state) {
         '#maxlength' => 256,
     );
 
+    $ajax = array(
+        'callback' => '_typos_save_report',
+        'wrapper' => 'typos-report-result', // this div declared in typos-report-form.tpl.php
+        'method' => 'append',
+        'effect' => 'fade',
+    );
 
+    $form['send_typos_report'] = array(
+        '#type' => 'button',
+        '#value' => t('Send typo report'),
+        '#weight' => 2,
+        '#ajax' => $ajax,
+    );
 
     return $form;
 }

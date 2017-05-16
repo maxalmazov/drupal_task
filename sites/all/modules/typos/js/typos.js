@@ -9,45 +9,48 @@
         var sel = typos_get_sel_text();
         var context = typos_get_sel_context(sel);
         if ($(sel.element).closest('.orpho-field').length){
-            var popup_text = $(sel.element).closest('div').attr('typos_popup_text');
-            Drupal.CTools.Modal.show(Drupal.settings.TyposModal);
-            $('#typos-modal-content').html('&nbsp;');
-            $('#typos-report-content').appendTo('#typos-modal-content');
+            var max_chars = $(sel.element).closest('div').attr('typos_max_chars');
+            if (sel.selected_text.length > max_chars) {
+                alert(Drupal.t('No more than !max_chars characters can be selected when creating a typo report.', {'!max_chars': max_chars}))
+            } else if (sel.selected_text.length == 0) {
+            } else {
+                var popup_text = $(sel.element).closest('div').attr('typos_popup_text');
+                Drupal.CTools.Modal.show(Drupal.settings.TyposModal);
+                $('#typos-modal-content').html('&nbsp;');
+                $('#typos-report-content').appendTo('#typos-modal-content');
 
-            $('#typos-context-div').html(context);
-            $('#typos_popup_text').html(popup_text);
-            $('#typos-context').val(context);
-            $('#typos-url').val(window.location);
+                $('#typos-context-div').html(context);
+                $('#typos_popup_text').html(popup_text);
+                $('#typos-context').val(context);
+                $('#typos-url').val(window.location);
 
 
-            // Close modal by Esc press.
-            $(document).keydown(typos_close = function(e) {
-                if (e.keyCode == 27) {
+                // Close modal by Esc press.
+                $(document).unbind('keydown', modalEventEscapeCloseHandler); //see ctools/js/modal.js
+                $(document).keydown(modalEventEscapeCloseHandler = function(e) {
+                    if (e.keyCode == 27) {
+                        typos_restore_form();
+                        modalContentClose();
+                        $(document).unbind('keydown', modalEventEscapeCloseHandler);
+                    }
+                });
+
+                // Close modal by clicking outside the window.
+                $('#modalBackdrop').click(typos_click_close = function(e) {
                     typos_restore_form();
                     modalContentClose();
-                    $(document).unbind('keydown', typos_close);
-                }
-            });
+                    $('#modalBackdrop').unbind('click', typos_click_close);
+                });
 
-            // Close modal by clicking outside the window.
-            $('#modalBackdrop').click(typos_click_close = function(e) {
-                typos_restore_form();
-                modalContentClose();
-                $('#modalBackdrop').unbind('click', typos_click_close);
-            });
-
-            // Close modal by "close" link click.
-            $('#close').click(function(e) {
-                typos_restore_form();
-                modalContentClose();
-                $(document).unbind('keydown', typos_close);
-            });
+                // Close modal by "close" link click.
+                $('#close').click(typos_close_click = function(e) {
+                    e.preventDefault();
+                    typos_restore_form();
+                    modalContentClose();
+                    $(document).unbind('click', typos_close_click);
+                });
+            }
         }
-
-        console.log($(sel.element).closest('div'));
-        console.log($(sel.element).closest('div').is('[typos_max_chars]'));
-        console.log($(sel.element).closest('div').attr('typos_max_chars'));
-
     };
 
     /**
@@ -55,7 +58,7 @@
      */
     function typos_restore_form() {
         if($('#typos-report-result').css('display') == 'none') {
-            $('#typos-report-content').appendTo('#typos-report-wrapper');
+            $('#typos-report-content').appendTo('#typos-report-wrapper');console.log('kirie eleison');
         }
     }
 
