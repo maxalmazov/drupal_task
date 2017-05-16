@@ -21,8 +21,13 @@
 
                 $('#typos-context-div').html(context);
                 $('#typos_popup_text').html(popup_text);
-                $('#typos-context').val(context);
-                $('#typos-url').val(window.location);
+
+                $('#typos_context').val(context);
+                $('#typos_url').val(window.location);
+                $('#typos_entity_type').val($(sel.element).closest('div').attr('entity_type'));
+                $('#typos_nid').val($(sel.element).closest('div').attr('nid'));
+                $('#typos_label').val($(sel.element).closest('div').attr('label'));
+                $('#typos_field_name').val($(sel.element).closest('div').attr('field_name'));
 
 
                 // Close modal by Esc press.
@@ -140,4 +145,10 @@
         return context;
     }
 
+    // callback for Drupal ajax_command_invoke function
+    $.fn.typos_js_callback = function(res) {
+        $('#typos-report-message').css({'display': 'none'});
+        $('#typos-report-result').css({'display': 'block'}).html(Drupal.t('Your message has been sent. Thank you.'));
+        setTimeout(modalContentClose, 1000);
+    };
 })(jQuery);

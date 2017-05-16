@@ -7,17 +7,31 @@ function typos_schema() {
                 'type' => 'serial',
                 'not null' => TRUE,
             ],
+            'entity_type' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
             'url' => [
                 'type' => 'varchar',
                 'length' => '255',
                 'not null' => TRUE,
             ],
-            'created' => [
+            'node_id' => [
+                'type' => 'int',
+                'not null' => TRUE,
+            ],
+            'createdAt' => [
                 'type' => 'int',
                 'default' => '0',
                 'not null' => TRUE,
             ],
-            'uid' => [
+            'field_name' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'user_id' => [
                 'type' => 'int',
                 'default' => '0',
                 'not null' => TRUE,

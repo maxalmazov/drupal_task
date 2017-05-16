@@ -13,6 +13,12 @@ function typos_menu()
         'access arguments' => ['administer site configuration'],
         'file' => 'typos.admin.inc',
     ];
+    $items ['ajax/typos-report'] = [
+        'title' => 'Typos report',
+        'page callback' => 'typos_report_table',
+        'access arguments' => ['administer site configuration'],
+        'type' => MENU_CALLBACK,
+    ];
 
     return $items;
 }
@@ -73,6 +79,28 @@ function typos_form_field_ui_field_edit_form_alter_validate(&$form, &$form_state
     }
 }
 
+
+/**
+ * Implements hook_permission().
+ */
+function typos_permission() {
+    return array(
+        'access typo list' => array(
+            'title' => t('User may access typo reports list'),
+        ),
+    );
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function typos_views_api() {
+    return array(
+        'api' => 3,
+        'path' => drupal_get_path('module', 'typos') . '/views',
+    );
+}
+
 /**
  * Implements hook_theme().
  */
@@ -118,7 +146,6 @@ function typos_preprocess_field(&$variables, $hook)
  * Implements hook_page_build().
  */
 function typos_page_build(&$page) {
-
         ctools_include('ajax');
         ctools_include('modal');
         drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.template.js');
@@ -254,3 +281,52 @@ function typos_report_form($form, &$form_state) {
 
     return $form;
 }
+
+function _typos_save_report($form, $form_state)
+{
+    $commands = [];
+    $insert_db = db_insert('typos_report')->fields([
+        'entity_type' => $form_state['values']['typos_entity_type'],
+        'url' => $form_state['values']['typos_url'],
+        'node_id' => $form_state['values']['typos_nid'],
+        'createdAt' => time(),
+        'field_name' => $form_state['values']['typos_label'].'('.$form_state['values']['typos_field_name'].')',
+        'user_id' => $form_state['values']['typos_uid'],
+        'user_ip' => $_SERVER['REMOTE_ADDR'],
+        'text' => $form_state['values']['typos_context'],
+        'comment' => $form_state['values']['typos_comment'],
+    ])->execute();
+    $commands[] = ajax_command_invoke(
+        NULL,
+        'typos_js_callback', [$form_state['values']['typos_comment'] . ' => ' . $form_state['values']['typos_context'] . ' => ' . $form_state['values']['typos_url']]
+    );
+    $commands[] = ajax_command_append('#typos-report-wrapper', theme('typos_report'));
+
+    return ['#type' => 'ajax', '#commands' => $commands];
+}
+
+function typos_report_table()
+{
+    //echo'kirie eleison';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
