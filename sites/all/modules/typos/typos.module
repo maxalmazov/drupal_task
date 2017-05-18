@@ -308,7 +308,7 @@ function _typos_save_report($form, $form_state)
     $to = $info_instance['typos']['email'];
     $from = variable_get('site_mail');
 
-    $message = drupal_mail('system', '', $to, '', '', $from, FALSE);
+    /*$message = drupal_mail('system', '', $to, '', '', $from, FALSE);
     $message['subject'] = 'Typo report';
     $message['body'] = [];
     $message['body'][] =
@@ -326,7 +326,7 @@ function _typos_save_report($form, $form_state)
 
     $message = $system->format($message);
 
-    $message['result'] = $system->mail($message);
+    $message['result'] = $system->mail($message);*/
 
     return ['#type' => 'ajax', '#commands' => $commands];
 }
