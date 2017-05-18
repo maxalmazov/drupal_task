@@ -26,7 +26,7 @@ function typos_admin_settings() {
     $form['typos_reports_email'] = [
         '#type' => 'textfield',
         '#title' => t('Email to send report'),
-        '#default_value' => variable_get('site_mail')
+        '#default_value' => !empty(variable_get('typos_reports_email')) ? variable_get('typos_reports_email') : variable_get('site_mail'),
     ];
 
     $form['typos_max_chars'] = array(
@@ -63,7 +63,7 @@ function typos_admin_settings_validate($form, &$form_state) {
         $form_state['values']['typos_max_reports'] = (int) $form_state['values']['typos_max_reports'];
     }
 
-    if (!valid_email_address($form['typos_reports_email'])) {
-        form_set_error('typos_reports_email', 'Your email address appears malformed');
+    if (!valid_email_address($form_state['values']['typos_reports_email'])) {
+        form_set_error('typos_reports_email', 'Your email address is not valid');
     }
 }

@@ -1,6 +1,6 @@
 (function ($) {
     $(document).keydown(function(event) {
-        if (event.shiftKey && event.keyCode == 13) {
+        if (event.ctrlKey && event.keyCode == 13) {
             $.fn.typos_report_window();
         }
     });
@@ -8,7 +8,12 @@
     $.fn.typos_report_window = function() {
         var sel = typos_get_sel_text();
         var context = typos_get_sel_context(sel);
+
         if ($(sel.element).closest('.orpho-field').length){
+            if (typeof Drupal.settings.typos !== "undefined") {
+                alert('You can send only '+Drupal.settings.typos.max_reports+' reports per day');
+                return;
+            }
             var max_chars = $(sel.element).closest('div').attr('typos_max_chars');
             if (sel.selected_text.length > max_chars) {
                 alert(Drupal.t('No more than !max_chars characters can be selected when creating a typo report.', {'!max_chars': max_chars}))
@@ -25,6 +30,7 @@
                 $('#typos_context').val(context);
                 $('#typos_url').val(window.location);
                 $('#typos_entity_type').val($(sel.element).closest('div').attr('entity_type'));
+                $('#bundle').val($(sel.element).closest('div').attr('bundle'));
                 $('#typos_nid').val($(sel.element).closest('div').attr('nid'));
                 $('#typos_label').val($(sel.element).closest('div').attr('label'));
                 $('#typos_field_name').val($(sel.element).closest('div').attr('field_name'));
@@ -112,12 +118,12 @@
         context_third = context.substring(selection_end, context.length);
         context = context_first + context_second + context_third;
 
-        context_start = selection_start - 60;
+        context_start = selection_start - 40;
         if (context_start < 0) {
             context_start = 0;
         }
 
-        context_end = selection_end + 60;
+        context_end = selection_end + 40;
         if (context_end > context.length) {
             context_end = context.length;
         }
@@ -126,8 +132,8 @@
 
         context_start = context.indexOf(' ') + 1;
 
-        if (selection_start + 60 < context.length) {
-            context_end = context.lastIndexOf(' ', selection_start + 60);
+        if (selection_start + 40 < context.length) {
+            context_end = context.lastIndexOf(' ', selection_start + 40);
         }
         else {
             context_end = context.length;
