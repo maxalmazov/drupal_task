@@ -1,0 +1,412 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function typos_menu()
+{
+    $items = [];
+    $items ['admin/config/user-interface/typos'] = [
+        'title' => 'Typos report setting',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => ['typos_admin_settings'],
+        'access arguments' => ['administer site configuration'],
+        'file' => 'typos.admin.inc',
+    ];
+
+    return $items;
+}
+
+/**
+ * Implements hook_form_field_ui_field_edit_form_alter().
+ */
+function typos_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id)
+{
+    if (is_text_field($form['#field']['type'])) {
+
+        $form['instance']['typos'] = [
+            '#type' => 'fieldset',
+            '#title' => t('Typos field settings'),
+            '#tree' => TRUE,
+        ];
+
+        $form['instance']['typos']['is_enabled'] = [
+            '#type' => 'checkbox',
+            '#title' => t('Allow the users to send a report of typos.'),
+            '#default_value' => !empty($form['#instance']['typos']['is_enabled']) ? $form['#instance']['typos']['is_enabled'] : 0,
+        ];
+
+        $form['instance']['typos']['email'] = [
+            '#type' => 'textfield',
+            '#title' => t('Email where typos report are sent.'),
+            '#description' => 'Attention! This should not be the site\'s mail, specify the administrator\'s email.',
+            '#default_value' => !empty($form['#instance']['typos']['email']) ? $form['#instance']['typos']['email'] : 'example@example.com',
+        ];
+
+        $form['instance']['typos']['max_chars'] = [
+            '#type' => 'textfield',
+            '#title' => t('Max chars selection fo report.'),
+            '#description' => 'Used if allows the users to send a report of typos.',
+            '#default_value' => !empty($form['#instance']['typos']['max_chars']) ? $form['#instance']['typos']['max_chars'] : variable_get('typos_max_chars', 10),
+        ];
+
+        $form['instance']['typos']['popup_text'] = [
+            '#type' => 'textfield',
+            '#title' => t('Text for modal window.'),
+            '#description' => 'Used if allows the users to send a report of typos.',
+            '#default_value' => !empty($form['#instance']['typos']['popup_text']) ? $form['#instance']['typos']['popup_text'] : 'Send typo report',
+        ];
+        $form['#validate'][] = 'typos_form_field_ui_field_edit_form_alter_validate';
+    }
+}
+
+function typos_form_field_ui_field_edit_form_alter_validate(&$form, &$form_state)
+{
+    if (!valid_email_address($form_state['values']['instance']['typos']['email'])) {
+            form_set_error('email', t($form_state['values']['instance']['typos']['email'].' is not valid email'));
+        }
+
+    if(!is_numeric($form_state['values']['instance']['typos']['max_chars']) || $form_state['values']['instance']['typos']['max_chars'] < 0) {
+        form_set_error('max_chars', t('Maximum characters in selection should be an integer.'));
+    } else {
+        $form_state['values']['instance']['typos']['max_chars'] = (int) $form_state['values']['instance']['typos']['max_chars'];
+    }
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function typos_views_api() {
+    return array(
+        'api' => 3,
+        'path' => drupal_get_path('module', 'typos') . '/views',
+    );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function typos_theme() {
+    return [
+        'typos_report' => [
+            'template' => 'typos-report-form',
+        ],
+    ];
+}
+
+/**
+ * Process variables for typos-report-form.tpl.php.
+ *
+ * @see typos-report-form.tpl.php
+ */
+function template_preprocess_typos_report(&$variables) {
+    $form = drupal_get_form('typos_report_form');
+    $variables['typos_report_form'] = drupal_render($form);
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function typos_preprocess_field(&$variables)
+{
+    $field_type = $variables['element']['#field_type'];
+    $revision = node_revision_list($variables['element']['#object']);
+    foreach ($revision as $item) {
+        if ($item->vid == $item->current_vid) {
+            if ($item->log == '') {
+                $revision_name = 'revision nonexistent';
+            } else {
+                $revision_name = $item->log.'(vid = '.$item->vid.')';
+            }
+            break;
+        }
+        $revision_name = null;
+    }
+
+    if (is_text_field($field_type)) {
+        $info_instance = field_info_instance($variables['element']['#entity_type'], $variables['element']['#field_name'], $variables['element']['#bundle']);
+        if (array_key_exists('typos', $info_instance) && $info_instance['typos']['is_enabled']) {
+            $variables['classes_array'][] = 'orpho-field';
+            $variables['item_attributes_array']['0']['typos_max_chars'][] = $info_instance['typos']['max_chars'];
+            $variables['item_attributes_array']['0']['typos_popup_text'][] = $info_instance['typos']['popup_text'];
+            $variables['item_attributes_array']['0']['entity_type'][] = $info_instance['entity_type'];
+            $variables['item_attributes_array']['0']['bundle'][] = $info_instance['bundle'];
+            $variables['item_attributes_array']['0']['nid'][] = $variables['element']['#object']->nid;
+            $variables['item_attributes_array']['0']['label'][] = $info_instance['label'];
+            $variables['item_attributes_array']['0']['field_name'][] = $info_instance['field_name'];
+            $variables['item_attributes_array']['0']['revision'][] = $revision_name;
+        }
+    }
+}
+
+/**
+ * Implements hook_page_build().
+ */
+function typos_page_build(&$page) {
+    ctools_include('ajax');
+    ctools_include('modal');
+    drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.template.js');
+    drupal_add_js(drupal_get_path('module', 'typos') . '/js/typos.js');
+    drupal_add_css(drupal_get_path('module', 'typos') . '/css/typos.css');
+
+    ctools_modal_add_js();
+    $settings = [
+        'TyposModal' => [
+            'loadingText' => t('Send typo report'),
+            'closeText' => t('close'),
+            'closeImage' => '',
+            'throbber' => theme('image', [
+                'path' => ctools_image_path('throbber.gif'),
+                'title' => t('Loading...'),
+                'alt' => t('Loading'),
+            ]),
+            'modalTheme' => 'TyposModalDialog',
+            'animation' => 'show',
+            'animationSpeed' => 'fast',
+            'modalSize' => [
+                'type' => 'scale',
+                'width' => '560px',
+                'height' => '250px',
+                'addWidth' => 0,
+                'addHeight' => 0,
+                'contentRight' => 25,
+                'contentBottom' => 45,
+            ],
+            'modalOptions' => [
+                'opacity' => 0.55,
+                'background' => '#000',
+            ],
+        ],
+    ];
+
+    drupal_add_js($settings, 'setting');
+
+    $page['page_bottom']['typos']= [
+        '#type' => 'markup',
+        '#markup' => '<div id="typos-report-wrapper">' . theme('typos_report') . '</div>',
+    ];
+
+    $user_ip = ip_address();
+    $count_report = db_select('typos_report', 't')
+        ->condition('t.user_ip', $user_ip, '=')->condition('t.created_at', time()+86400, '<')
+        ->countQuery()->execute()->fetchField();
+    $typos_max_reports = variable_get('typos_max_reports', 3);
+
+    if ($count_report > $typos_max_reports && $typos_max_reports != 0) {
+        drupal_add_js(array('typos' => array('max_reports' => $typos_max_reports)), 'setting');
+    }
+}
+
+/**
+ * Typo report form
+ */
+function typos_report_form($form, &$form_state) {
+    global $user;
+
+    $form['typos_comment'] = [
+        '#type' => 'textfield',
+        '#title' => t('Typos comment'),
+        '#default_value' => '',
+        '#size' => 60,
+        '#maxlength' => 128,
+        '#required' => FALSE,
+        '#weight' => 1,
+    ];
+
+    $form['typos_context'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 128,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_context'],
+    ];
+
+    $form['typos_url'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_url'],
+    ];
+
+    $form['typos_entity_type'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_entity_type'],
+    ];
+
+    $form['bundle'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'bundle'],
+    ];
+
+    $form['revision'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'revision'],
+    ];
+
+    $form['typos_nid'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_nid'],
+    ];
+
+    $form['typos_label'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_label'],
+    ];
+
+    $form['typos_field_name'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'typos_field_name'],
+    ];
+
+    $form['typos_uid'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $user->uid,
+        '#maxlength' => 256,
+    );
+
+    $ajax = array(
+        'callback' => '_typos_save_report',
+        'wrapper' => 'typos-report-result', // this div declared in typos-report-form.tpl.php
+        'method' => 'append',
+        'effect' => 'fade',
+    );
+
+    $form['send_typos_report'] = array(
+        '#type' => 'button',
+        '#value' => t('Send typo report'),
+        '#weight' => 2,
+        '#ajax' => $ajax,
+    );
+
+    return $form;
+}
+
+function _typos_save_report($form, $form_state)
+{
+    $commands = [];
+    $insert_db = db_insert('typos_report')->fields([
+        'entity_type' => $form_state['values']['typos_entity_type'],
+        'bundle' => $form_state['values']['bundle'],
+        'revision' => $form_state['values']['revision'],
+        'url' => $form_state['values']['typos_url'],
+        'entity_id' => $form_state['values']['typos_nid'],
+        'created_at' => time(),
+        'field_name' => $form_state['values']['typos_label'].'('.$form_state['values']['typos_field_name'].')',
+        'user_id' => $form_state['values']['typos_uid'],
+        'user_ip' => $_SERVER['REMOTE_ADDR'],
+        'text' => $form_state['values']['typos_context'],
+        'comment' => $form_state['values']['typos_comment'],
+    ])->execute();
+    $commands[] = ajax_command_invoke(
+        NULL,
+        'typos_js_callback', [$form_state['values']['typos_comment'] . ' => ' . $form_state['values']['typos_context'] . ' => ' . $form_state['values']['typos_url']]
+    );
+    $commands[] = ajax_command_append('#typos-report-wrapper', theme('typos_report'));
+
+    $info_instance = field_info_instance($form_state['values']['typos_entity_type'],$form_state['values']['typos_field_name'],$form_state['values']['bundle']);
+    $to = $info_instance['typos']['email'];
+    $from = variable_get('site_mail');
+
+    /*$message = drupal_mail('system', '', $to, '', '', $from, FALSE);
+    $message['subject'] = 'Typo report';
+    $message['body'] = [];
+    $message['body'][] =
+        'Entity_type: '.$form_state['values']['typos_entity_type'].'('.$form_state['values']['bundle'].')'.PHP_EOL.
+        'URL: '.$form_state['values']['typos_url'].PHP_EOL.
+        'Node ID: '.$form_state['values']['typos_nid'].PHP_EOL.
+        'Date: '.time().PHP_EOL.
+        'Field name: '.$form_state['values']['typos_label'].'('.$form_state['values']['typos_field_name'].')'.PHP_EOL.
+        'User ID: '.$form_state['values']['typos_uid'].PHP_EOL. 'User IP: '.$_SERVER['REMOTE_ADDR'].PHP_EOL.
+        'Typo context: '.$form_state['values']['typos_context'].PHP_EOL.
+        'User comment: '.$form_state['values']['typos_comment'].PHP_EOL
+    ;
+
+    $system = drupal_mail_system('system', '');
+
+    $message = $system->format($message);
+
+    $message['result'] = $system->mail($message);*/
+
+    return ['#type' => 'ajax', '#commands' => $commands];
+}
+
+/**
+ * Implements hook_cron()
+ */
+function typo_cron() {
+    // Remove old reports.
+    $ttl = variable_get('typo_reports_ttl', 4320);
+    if ($ttl > 0) {
+        db_delete('typos_report')->condition('created_at', time() - $ttl * 60, '<')->execute();
+    }
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function typos_entity_info() {
+    return [
+        'typos' => [
+            'label' => t('Typo'),
+            'base table' => 'typos_report',
+            'entity keys' => [
+                'id' => 'typo_id',
+            ],
+        ],
+    ];
+}
+
+function is_text_field($field_type)
+{
+    if (in_array($field_type, ['text', 'text_long', 'text_with_summary'])) {
+        return true;
+    }
+
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
