@@ -12,16 +12,26 @@ function typos_schema() {
                 'length' => '255',
                 'not null' => TRUE,
             ],
+            'bundle' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'revision' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
             'url' => [
                 'type' => 'varchar',
                 'length' => '255',
                 'not null' => TRUE,
             ],
-            'node_id' => [
+            'entity_id' => [
                 'type' => 'int',
                 'not null' => TRUE,
             ],
-            'createdAt' => [
+            'created_at' => [
                 'type' => 'int',
                 'default' => '0',
                 'not null' => TRUE,
@@ -69,5 +79,4 @@ function typos_uninstall() {
   variable_del('typos_max_reports');
 
   cache_clear_all('typos', 'cache', TRUE);
-  drupal_uninstall_schema('typos_report');
 }

@@ -35,6 +35,42 @@ function typos_views_data() {
         ],
     ];
 
+    $data['typos_report']['bundle'] = [
+        'title' => t('Bundle type'),
+        'help' => t('Bundle type where typo found.'),
+        'field' => [
+            'handler' => 'views_handler_field',
+            'click sortable' => TRUE,
+        ],
+        'filter' => [
+            'handler' => 'views_handler_filter_string',
+        ],
+        'sort' => [
+            'handler' => 'views_handler_sort',
+        ],
+        'argument' => [
+            'handler' => 'views_handler_argument_string',
+        ],
+    ];
+
+    $data['typos_report']['revision'] = [
+        'title' => t('Revision'),
+        'help' => t('Revision'),
+        'field' => [
+            'handler' => 'views_handler_field',
+            'click sortable' => TRUE,
+        ],
+        'filter' => [
+            'handler' => 'views_handler_filter_string',
+        ],
+        'sort' => [
+            'handler' => 'views_handler_sort',
+        ],
+        'argument' => [
+            'handler' => 'views_handler_argument_string',
+        ],
+    ];
+
     $data['typos_report']['url'] = [
         'title' => t('Typo URL'),
         'help' => t('URL where typo found.'),
@@ -89,7 +125,7 @@ function typos_views_data() {
         ],
     ];
 
-    $data['typos_report']['createdAt'] = [
+    $data['typos_report']['created_at'] = [
         'title' => t('Date'),
         'help' => t('Date report'),
         'field' => [
@@ -107,9 +143,9 @@ function typos_views_data() {
         ],
     ];
 
-    $data['typos_report']['node_id'] = [
-        'title' => t('Node ID'),
-        'help' => t('Node ID with typo'),
+    $data['typos_report']['entity_id'] = [
+        'title' => t('Entity ID'),
+        'help' => t('Entity ID with typo'),
         'field' => [
             'handler' => 'views_handler_field',
         ],

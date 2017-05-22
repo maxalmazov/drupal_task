@@ -34,6 +34,7 @@
                 $('#typos_nid').val($(sel.element).closest('div').attr('nid'));
                 $('#typos_label').val($(sel.element).closest('div').attr('label'));
                 $('#typos_field_name').val($(sel.element).closest('div').attr('field_name'));
+                $('#revision').val($(sel.element).closest('div').attr('revision'));
 
 
                 // Close modal by Esc press.

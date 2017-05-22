@@ -22,11 +22,11 @@ function typos_menu()
  */
 function typos_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id)
 {
-    if ($form['#field']['type'] == 'text' || $form['#field']['type'] == 'text_long' || $form['#field']['type'] == 'text_with_summary') {
+    if (is_text_field($form['#field']['type'])) {
 
         $form['instance']['typos'] = [
             '#type' => 'fieldset',
-            '#title' => t('<em class="placeholder">Typos</em> field settings'),
+            '#title' => t('Typos field settings'),
             '#tree' => TRUE,
         ];
 
@@ -110,7 +110,20 @@ function template_preprocess_typos_report(&$variables) {
 function typos_preprocess_field(&$variables)
 {
     $field_type = $variables['element']['#field_type'];
-    if ($field_type == 'text_with_summary' || $field_type == 'text_long' || $field_type == 'text') {
+    $revision = node_revision_list($variables['element']['#object']);
+    foreach ($revision as $item) {
+        if ($item->vid == $item->current_vid) {
+            if ($item->log == '') {
+                $revision_name = 'revision nonexistent';
+            } else {
+                $revision_name = $item->log.'(vid = '.$item->vid.')';
+            }
+            break;
+        }
+        $revision_name = null;
+    }
+
+    if (is_text_field($field_type)) {
         $info_instance = field_info_instance($variables['element']['#entity_type'], $variables['element']['#field_name'], $variables['element']['#bundle']);
         if (array_key_exists('typos', $info_instance) && $info_instance['typos']['is_enabled']) {
             $variables['classes_array'][] = 'orpho-field';
@@ -121,6 +134,7 @@ function typos_preprocess_field(&$variables)
             $variables['item_attributes_array']['0']['nid'][] = $variables['element']['#object']->nid;
             $variables['item_attributes_array']['0']['label'][] = $info_instance['label'];
             $variables['item_attributes_array']['0']['field_name'][] = $info_instance['field_name'];
+            $variables['item_attributes_array']['0']['revision'][] = $revision_name;
         }
     }
 }
@@ -172,9 +186,9 @@ function typos_page_build(&$page) {
         '#markup' => '<div id="typos-report-wrapper">' . theme('typos_report') . '</div>',
     ];
 
-    $user_ip = $_SERVER['REMOTE_ADDR'];
+    $user_ip = ip_address();
     $count_report = db_select('typos_report', 't')
-        ->condition('t.user_ip', $user_ip, '=')->condition('t.createdAt', time()+86400, '<')
+        ->condition('t.user_ip', $user_ip, '=')->condition('t.created_at', time()+86400, '<')
         ->countQuery()->execute()->fetchField();
     $typos_max_reports = variable_get('typos_max_reports', 3);
 
@@ -187,6 +201,8 @@ function typos_page_build(&$page) {
  * Typo report form
  */
 function typos_report_form($form, &$form_state) {
+    global $user;
+
     $form['typos_comment'] = [
         '#type' => 'textfield',
         '#title' => t('Typos comment'),
@@ -233,6 +249,15 @@ function typos_report_form($form, &$form_state) {
         '#attributes' => ['id' => 'bundle'],
     ];
 
+    $form['revision'] = [
+        '#type' => 'hidden',
+        '#default_value' => '',
+        '#maxlength' => 256,
+        '#required' => FALSE,
+        '#weight' => 1,
+        '#attributes' => ['id' => 'revision'],
+    ];
+
     $form['typos_nid'] = [
         '#type' => 'hidden',
         '#default_value' => '',
@@ -260,7 +285,6 @@ function typos_report_form($form, &$form_state) {
         '#attributes' => ['id' => 'typos_field_name'],
     ];
 
-    global $user;
     $form['typos_uid'] = array(
         '#type' => 'hidden',
         '#default_value' => $user->uid,
@@ -288,10 +312,12 @@ function _typos_save_report($form, $form_state)
 {
     $commands = [];
     $insert_db = db_insert('typos_report')->fields([
-        'entity_type' => $form_state['values']['typos_entity_type'].'('.$form_state['values']['bundle'].')',
+        'entity_type' => $form_state['values']['typos_entity_type'],
+        'bundle' => $form_state['values']['bundle'],
+        'revision' => $form_state['values']['revision'],
         'url' => $form_state['values']['typos_url'],
-        'node_id' => $form_state['values']['typos_nid'],
-        'createdAt' => time(),
+        'entity_id' => $form_state['values']['typos_nid'],
+        'created_at' => time(),
         'field_name' => $form_state['values']['typos_label'].'('.$form_state['values']['typos_field_name'].')',
         'user_id' => $form_state['values']['typos_uid'],
         'user_ip' => $_SERVER['REMOTE_ADDR'],
@@ -338,7 +364,7 @@ function typo_cron() {
     // Remove old reports.
     $ttl = variable_get('typo_reports_ttl', 4320);
     if ($ttl > 0) {
-        db_delete('typos_report')->condition('createdAt', time() - $ttl * 60, '<')->execute();
+        db_delete('typos_report')->condition('created_at', time() - $ttl * 60, '<')->execute();
     }
 }
 
@@ -357,7 +383,14 @@ function typos_entity_info() {
     ];
 }
 
+function is_text_field($field_type)
+{
+    if (in_array($field_type, ['text', 'text_long', 'text_with_summary'])) {
+        return true;
+    }
 
+    return false;
+}
 
 
 
