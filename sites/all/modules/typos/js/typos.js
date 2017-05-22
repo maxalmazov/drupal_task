@@ -1,33 +1,37 @@
 (function ($) {
-    $(document).keydown(function(event) {
-        if (event.ctrlKey && event.keyCode == 13) {
-            $.fn.typos_report_window();
+    Drupal.behaviors.typosReport = {
+        attach: function (context, setting) {
+            $(context).keydown(function(event) {
+                if (event.ctrlKey && event.keyCode == 13) {
+                    $.fn.typos_report_window();
+                }
+            });
         }
-    });
+    };
 
     $.fn.typos_report_window = function() {
         var sel = typos_get_sel_text();
-        var context = typos_get_sel_context(sel);
+        var contextTypo = typos_get_sel_context(sel);
 
         if ($(sel.element).closest('.orpho-field').length){
             if (typeof Drupal.settings.typos !== "undefined") {
                 alert('You can send only '+Drupal.settings.typos.max_reports+' reports per day');
                 return;
             }
-            var max_chars = $(sel.element).closest('div').attr('typos_max_chars');
-            if (sel.selected_text.length > max_chars) {
-                alert(Drupal.t('No more than !max_chars characters can be selected when creating a typo report.', {'!max_chars': max_chars}))
-            } else if (sel.selected_text.length == 0) {
+            var maxChars = $(sel.element).closest('div').attr('typos_max_chars');
+            if (sel.selectedText.length > maxChars) {
+                alert(Drupal.t('No more than !maxChars characters can be selected when creating a typo report.', {'!maxChars': maxChars}))
+            } else if (sel.selectedText.length == 0) {
             } else {
-                var popup_text = $(sel.element).closest('div').attr('typos_popup_text');
+                var popupText = $(sel.element).closest('div').attr('typos_popup_text');
                 Drupal.CTools.Modal.show(Drupal.settings.TyposModal);
                 $('#typos-modal-content').html('&nbsp;');
                 $('#typos-report-content').appendTo('#typos-modal-content');
 
-                $('#typos-context-div').html(context);
-                $('#typos_popup_text').html(popup_text);
+                $('#typos-context-div').html(contextTypo);
+                $('#typos_popup_text').html(popupText);
 
-                $('#typos_context').val(context);
+                $('#typos_context').val(contextTypo);
                 $('#typos_url').val(window.location);
                 $('#typos_entity_type').val($(sel.element).closest('div').attr('entity_type'));
                 $('#bundle').val($(sel.element).closest('div').attr('bundle'));
@@ -70,7 +74,7 @@
      */
     function typos_restore_form() {
         if($('#typos-report-result').css('display') == 'none') {
-            $('#typos-report-content').appendTo('#typos-report-wrapper');console.log('kirie eleison');
+            $('#typos-report-content').appendTo('#typos-report-wrapper');
         }
     }
 
@@ -80,20 +84,20 @@
     function typos_get_sel_text() {
         if (window.getSelection) {
             txt = window.getSelection();
-            selected_text = txt.toString();
+            selectedText = txt.toString();
             element = txt.anchorNode;
-            full_text = txt.anchorNode.textContent;
-            selection_start = txt.anchorOffset;
-            selection_end = txt.focusOffset;
+            fullText = txt.anchorNode.textContent;
+            selectionStart = txt.anchorOffset;
+            selectionEnd = txt.focusOffset;
         } else {
             return;
         }
 
         var txt = {
-            selected_text: selected_text,
-            full_text: full_text,
-            selection_start: selection_start,
-            selection_end: selection_end,
+            selectedText: selectedText,
+            fullText: fullText,
+            selectionStart: selectionStart,
+            selectionEnd: selectionEnd,
             element: element
         };
 
@@ -104,52 +108,52 @@
      * Function gets a context of selected text.
      */
     function typos_get_sel_context(sel) {
-        selection_start = sel.selection_start;
-        selection_end = sel.selection_end;
-        if (selection_start > selection_end) {
-            tmp = selection_start;
-            selection_start = selection_end;
-            selection_end = tmp;
+        selectionStart = sel.selectionStart;
+        selectionEnd = sel.selectionEnd;
+        if (selectionStart > selectionEnd) {
+            tmp = selectionStart;
+            selectionStart = selectionEnd;
+            selectionEnd = tmp;
         }
 
-        context = sel.full_text;
+        contextTypo = sel.fullText;
 
-        context_first = context.substring(0, selection_start);
-        context_second = '<strong>' + context.substring(selection_start, selection_end) + '</strong>';
-        context_third = context.substring(selection_end, context.length);
-        context = context_first + context_second + context_third;
+        contextFirst = contextTypo.substring(0, selectionStart);
+        contextSecond = '<strong>' + contextTypo.substring(selectionStart, selectionEnd) + '</strong>';
+        contextThird = contextTypo.substring(selectionEnd, contextTypo.length);
+        contextTypo = contextFirst + contextSecond + contextThird;
 
-        context_start = selection_start - 40;
-        if (context_start < 0) {
-            context_start = 0;
+        contextStart = selectionStart - 40;
+        if (contextStart < 0) {
+            contextStart = 0;
         }
 
-        context_end = selection_end + 40;
-        if (context_end > context.length) {
-            context_end = context.length;
+        contextEnd = selectionEnd + 40;
+        if (contextEnd > contextTypo.length) {
+            contextEnd = contextTypo.length;
         }
 
-        context = context.substring(context_start, context_end);
+        contextTypo = contextTypo.substring(contextStart, contextEnd);
 
-        context_start = context.indexOf(' ') + 1;
+        contextStart = contextTypo.indexOf(' ') + 1;
 
-        if (selection_start + 40 < context.length) {
-            context_end = context.lastIndexOf(' ', selection_start + 40);
+        if (selectionStart + 40 < contextTypo.length) {
+            contextEnd = contextTypo.lastIndexOf(' ', selectionStart + 40);
         }
         else {
-            context_end = context.length;
+            contextEnd = contextTypo.length;
         }
 
-        selection_start = context.indexOf('<strong>');
-        if (context_start > selection_start) {
-            context_start = 0;
+        selectionStart = contextTypo.indexOf('<strong>');
+        if (contextStart > selectionStart) {
+            contextStart = 0;
         }
 
-        if (context_start) {
-            context = context.substring(context_start, context_end);
+        if (contextStart) {
+            contextTypo = contextTypo.substring(contextStart, contextEnd);
         }
 
-        return context;
+        return contextTypo;
     }
 
     // callback for Drupal ajax_command_invoke function
