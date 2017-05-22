@@ -1,0 +1,82 @@
+<?php
+
+function typos_schema() {
+    $schema['typos_report'] = [
+        'fields' => [
+            'typo_id' => [
+                'type' => 'serial',
+                'not null' => TRUE,
+            ],
+            'entity_type' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'bundle' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'revision' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'url' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'entity_id' => [
+                'type' => 'int',
+                'not null' => TRUE,
+            ],
+            'created_at' => [
+                'type' => 'int',
+                'default' => '0',
+                'not null' => TRUE,
+            ],
+            'field_name' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'user_id' => [
+                'type' => 'int',
+                'default' => '0',
+                'not null' => TRUE,
+            ],
+            'user_ip' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'text' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ],
+            'comment' => [
+                'type' => 'varchar',
+                'length' => '255',
+                'not null' => TRUE,
+            ]
+        ],
+        'description' => 'List of reports about typos',
+        'primary key' => ['typo_id']
+    ];
+
+    return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function typos_uninstall() {
+  variable_del('typos_reports_ttl');
+  variable_del('typos_reports_email');
+  variable_del('typos_max_chars');
+  variable_del('typos_max_reports');
+
+  cache_clear_all('typos', 'cache', TRUE);
+}

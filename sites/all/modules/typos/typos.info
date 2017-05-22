@@ -3,3 +3,4 @@ description = Allows users to report the presence of typos on the site.
 core = 7.x
 dependencies[] = ctools
 configure = admin/config/user-interface/typos
+version = "7.x-1.3"
